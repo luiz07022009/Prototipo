@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valida — Painel do Administrador</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary: '#0ea5a4', accent: '#2563eb', danger: '#ef4444' }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800 antialiased">
+
+  <!-- HEADER -->
+  <header class="bg-white shadow">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="https://via.placeholder.com/40" alt="Logo" class="w-10 h-10 rounded-md bg-accent object-cover" />
+        <h1 class="text-xl font-semibold">Painel Administrador</h1>
+      </div>
+      <nav id="desktopMenu" class="hidden md:flex gap-4 items-center">
+        <a href="/planos" class="text-sm hover:underline">Planos</a>
+        <a href="/" class="text-sm hover:underline">Página do Usuário</a>
+        <div id="userInfo" class="hidden items-center gap-2">
+          <span id="userName" class="text-sm font-medium"></span>
+          <button id="logoutBtn" class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md">Sair</button>
+        </div>
+        <div id="authButtons"><p class="text-sm text-gray-600">Faça login para gerenciar.</p></div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="loader" class="text-center py-10">
+      <p class="text-gray-500">Verificando autenticação...</p>
+    </div>
+
+    <!-- Painel de Instituição -->
+    <div id="instituicaoPanel" class="hidden">
+      <h2 class="text-2xl font-semibold mb-4">Bem-vindo, <span id="adminNameInst"></span>!</h2>
+      <p class="text-gray-600 mb-6">Para começar a gerenciar espaços, você precisa criar ou vincular uma instituição.</p>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="font-semibold text-lg mb-4 border-b pb-2">Criar Nova Instituição</h3>
+        <form id="instituicaoForm" class="space-y-4">
+          <input id="instNome" type="text" placeholder="Nome da Instituição" class="w-full px-3 py-2 border rounded-md" required />
+          <input id="instCnpj" type="text" placeholder="CNPJ" class="w-full px-3 py-2 border rounded-md" required />
+          <input id="instEmail" type="email" placeholder="E-mail da Instituição" class="w-full px-3 py-2 border rounded-md" required />
+          <button type="submit" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700">Criar e Vincular</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Painel de Gerenciamento -->
+    <div id="managementPanel" class="hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <h2 class="text-2xl font-semibold">Gerenciamento de Espaços</h2>
+        <button id="addBtn" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700">+ Novo Espaço</button>
+      </div>
+
+      <!-- Tabela de Espaços -->
+      <div class="overflow-x-auto bg-white rounded-lg shadow mb-12">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="text-left px-4 py-3">Nome</th>
+              <th class="text-left px-4 py-3">Descrição</th>
+              <th class="text-left px-4 py-3">Tipo</th>
+              <th class="text-center px-4 py-3">Disponível</th>
+              <th class="text-center px-4 py-3">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y"></tbody>
+        </table>
+      </div>
+
+      <!-- Histórico de Reservas -->
+      <h2 class="text-2xl font-semibold mb-6">Histórico de Reservas</h2>
+      <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="text-left px-4 py-3">Espaço</th>
+              <th class="text-left px-4 py-3">Solicitante</th>
+              <th class="text-left px-4 py-3">Email</th>
+              <th class="text-left px-4 py-3">Data</th>
+              <th class="text-left px-4 py-3">Horário</th>
+              <th class="text-left px-4 py-3">Observações</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL DE ESPAÇO -->
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h4 id="modalTitle" class="font-semibold">Novo Espaço</h4>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button>
+      </div>
+      <div class="px-6 py-4 space-y-3">
+        <input id="nomeInput" type="text" placeholder="Nome do espaço" class="w-full px-3 py-2 border rounded-md" />
+        <input id="tipoInput" type="text" placeholder="Ex: Laboratório, Sala de Reunião" class="w-full px-3 py-2 border rounded-md" />
+        <textarea id="descInput" rows="3" placeholder="Descrição" class="w-full px-3 py-2 border rounded-md"></textarea>
+        <label class="flex items-center gap-2 text-sm">
+          <input id="dispInput" type="checkbox" class="accent-primary" /> Disponível
+        </label>
+      </div>
+      <div class="px-6 py-4 border-t flex justify-end gap-3">
+        <button id="cancelBtn" class="px-4 py-2 rounded-md border">Cancelar</button>
+        <button id="saveBtn" class="px-4 py-2 rounded-md bg-primary text-white">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script>
+    // --- GERENCIAMENTO DE LOGIN ---
+    const authManager = {
+      login(data) { sessionStorage.setItem('userData', JSON.stringify(data)); this.updateUI(); },
+      logout() { sessionStorage.removeItem('userData'); window.location.href = '/'; },
+      isLoggedIn() { return !!sessionStorage.getItem('userData'); },
+      getUserData() { return JSON.parse(sessionStorage.getItem('userData')); },
+      updateUI() {
+        const loggedIn = this.isLoggedIn();
+        const userData = loggedIn ? this.getUserData().user_data : null;
+        if (loggedIn && this.getUserData().user_type === 'admin') {
+          document.getElementById('userInfo').classList.remove('hidden'); document.getElementById('userInfo').classList.add('flex');
+          document.getElementById('authButtons').classList.add('hidden');
+          document.getElementById('userName').textContent = userData.nome;
+          document.getElementById('logoutBtn').onclick = () => this.logout();
+          initAdminPanel(userData);
+        } else {
+          document.getElementById('userInfo').classList.add('hidden');
+          document.getElementById('authButtons').classList.remove('hidden');
+          document.getElementById('loader').innerHTML = loggedIn 
+            ? '<p class="text-red-500">Acesso negado. Esta página é apenas para administradores.</p>'
+            : '<p class="text-red-500">Você precisa fazer login como administrador para acessar esta página.</p>';
+        }
+      }
+    };
+
+    // --- VARIÁVEIS GLOBAIS ---
+    const tbody = document.getElementById('tableBody');
+    const historyTbody = document.getElementById('historyTableBody');
+    const modal = document.getElementById('modal');
+    let editingId = null;
+    let adminData = null;
+
+    // --- FUNÇÕES ADMIN ---
+    function initAdminPanel(userData) {
+      adminData = userData;
+      document.getElementById('loader').classList.add('hidden');
+      if (adminData.id_inst) {
+        document.getElementById('managementPanel').classList.remove('hidden');
+        fetchEspacos();
+        fetchHistory();
+      } else {
+        document.getElementById('instituicaoPanel').classList.remove('hidden');
+        document.getElementById('adminNameInst').textContent = adminData.nome;
+      }
+    }
+
+    async function fetchEspacos() {
+      try {
+        const response = await fetch('/api/espacos');
+        if (!response.ok) throw new Error('Falha ao buscar espaços.');
+        const espacos = (await response.json()).filter(e => e.id_inst === adminData.id_inst);
+        renderTable(espacos);
+      } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${error.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(list) {
+      tbody.innerHTML = list.length ? '' : '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum espaço cadastrado.</td></tr>';
+      list.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-4 py-2 font-medium">${e.nome}</td><td class="px-4 py-2">${e.descricao}</td><td class="px-4 py-2">${e.tipo}</td>
+          <td class="px-4 py-2 text-center"><span class="px-2 py-1 text-xs rounded ${e.disponibilidade ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${e.disponibilidade ? 'Sim' : 'Não'}</span></td>
+          <td class="px-4 py-2 text-center space-x-2"><button class="editBtn px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Editar</button><button class="delBtn px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs">Excluir</button></td>`;
+        tr.querySelector('.editBtn').onclick = () => openModal(e);
+        tr.querySelector('.delBtn').onclick = () => deleteEspaco(e.id);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(espaco = null) {
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      if (espaco) {
+        editingId = espaco.id;
+        document.getElementById('modalTitle').textContent = 'Editar Espaço';
+        document.getElementById('nomeInput').value = espaco.nome;
+        document.getElementById('tipoInput').value = espaco.tipo;
+        document.getElementById('descInput').value = espaco.descricao;
+        document.getElementById('dispInput').checked = espaco.disponibilidade;
+      } else {
+        editingId = null;
+        document.getElementById('modalTitle').textContent = 'Novo Espaço';
+        document.getElementById('nomeInput').value = '';
+        document.getElementById('tipoInput').value = '';
+        document.getElementById('descInput').value = '';
+        document.getElementById('dispInput').checked = true;
+      }
+    }
+
+    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+    async function saveEspaco() {
+      const data = {
+        id_inst: adminData.id_inst,
+        nome: document.getElementById('nomeInput').value,
+        tipo: document.getElementById('tipoInput').value,
+        descricao: document.getElementById('descInput').value,
+        disponibilidade: document.getElementById('dispInput').checked
+      };
+      try {
+        const response = await fetch(editingId ? `/api/espacos/${editingId}` : '/api/espacos', {
+          method: editingId ? 'PUT' : 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Falha ao salvar.');
+        closeModal(); fetchEspacos();
+      } catch { alert("Ocorreu um erro ao salvar o espaço."); }
+    }
+
+    async function deleteEspaco(id) {
+      if (!confirm('Deseja realmente excluir este espaço?')) return;
+      try {
+        const response = await fetch(`/api/espacos/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Falha ao deletar.');
+        fetchEspacos();
+      } catch { alert("Ocorreu um erro ao deletar o espaço."); }
+    }
+
+    async function fetchHistory() {
+      try {
+        const response = await fetch('/api/reservas');
+        if (!response.ok) throw new Error('Falha ao buscar histórico.');
+        const allReservas = await response.json();
+        const espacosDoAdmin = Array.from(tbody.querySelectorAll('td:first-child')).map(td => td.textContent);
+        const historyList = allReservas.filter(h => espacosDoAdmin.includes(h.espaco_nome));
+        historyTbody.innerHTML = '';
+        if (!historyList.length) {
+          historyTbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">Nenhuma reserva encontrada para seus espaços.</td></tr>';
+          return;
+        }
+        historyList.forEach(h => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="px-4 py-2 font-medium">${h.espaco_nome}</td><td>${h.user_nome}</td><td>${h.user_email}</td><td>${h.data_reserva}</td><td>${h.hora_inicio} - ${h.hora_fim}</td><td class="px-4 py-2">${h.observacoes||'-'}</td>`;
+          historyTbody.appendChild(tr);
+        });
+      } catch (error) {
+        historyTbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${error.message}</td></tr>`;
+      }
+    }
+
+    // saljd
+document.getElementById('instituicaoForm').onsubmit = async e => {
+  e.preventDefault();
+
+  const payload = {
+    nome: document.getElementById('instNome').value.trim(),
+    cnpj: document.getElementById('instCnpj').value.trim(),
+    email: document.getElementById('instEmail').value.trim(),
+    admin_id: adminData.id
+  };
+
+  try {
+    // Verifica se já existe uma instituição com o mesmo CNPJ
+    const checkResponse = await fetch(`/api/instituicoes?cnpj=${payload.cnpj}`);
+    if (!checkResponse.ok) throw new Error('Erro ao verificar CNPJ existente.');
+
+    const existing = await checkResponse.json();
+
+    if (Array.isArray(existing) && existing.length > 0) {
+      alert('Já existe uma instituição com esse CNPJ no banco de dados.');
+      return;
+    }
+
+    // Cria nova instituição
+    const response = await fetch('/api/instituicoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+
+    if (!response.ok) throw new Error('Não foi possível criar a instituição.');
+    
+    alert('Instituição criada com sucesso!');
+    window.location.reload();
+
+  } catch (error) {
+    alert(`Erro: ${error.message}`);
+  }
+};
+
+//ksauf
+
+    document.getElementById('addBtn').onclick = () => openModal();
+    document.getElementById('closeModal').onclick = closeModal;
+    document.getElementById('cancelBtn').onclick = closeModal;
+    document.getElementById('saveBtn').onclick = saveEspaco;
+
+    document.addEventListener('DOMContentLoaded', () => authManager.updateUI());
+  </script>
+
+</body>
+</html>

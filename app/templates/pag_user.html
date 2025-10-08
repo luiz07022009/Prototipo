@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valida - Reserva de Espaços</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#2563eb'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800 antialiased">
+
+<header class="bg-white shadow">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="https://via.placeholder.com/40" alt="Logo" class="w-10 h-10 rounded-md bg-accent object-cover" />
+      <div><h1 class="text-xl font-semibold">Valida</h1></div>
+    </div>
+    <nav id="desktopMenu" class="hidden md:flex gap-4 items-center">
+      <a href="/planos" class="text-sm hover:underline">Planos</a>
+      <a href="/admin" class="text-sm hover:underline">Painel do Admin</a>
+      <div id="userInfo" class="hidden items-center gap-2"><span id="userName" class="text-sm font-medium"></span><button id="logoutBtn" class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md">Sair</button></div>
+      <div id="authButtons"><button id="loginBtn" class="ml-2 px-3 py-1.5 bg-primary text-white rounded-md text-sm">Entrar</button><button id="registerBtn" class="ml-2 px-3 py-1.5 bg-accent text-white rounded-md text-sm">Cadastrar</button></div>
+    </nav>
+    <div class="md:hidden">
+      <button id="mobileMenuBtn" class="p-2 rounded-md hover:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+    </div>
+    <div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform z-50">
+      <div class="flex flex-col px-4 py-6 gap-4">
+        <button id="closeMobileMenu" class="self-end text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        <a href="/planos" class="text-sm hover:underline">Planos</a>
+        <a href="/admin" class="text-sm hover:underline">Painel do Admin</a>
+        <hr/>
+        <div id="mobileAuthButtons"><button id="mobileLoginBtn" class="w-full px-3 py-1.5 bg-primary text-white rounded-md text-sm">Entrar</button><button id="mobileRegisterBtn" class="w-full mt-2 px-3 py-1.5 bg-accent text-white rounded-md text-sm">Cadastrar</button></div>
+        <div id="mobileUserInfo" class="hidden flex-col items-start gap-2"><span id="mobileUserName" class="text-sm font-medium"></span><button id="mobileLogoutBtn" class="w-full px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md text-left">Sair</button></div>
+      </div>
+    </div>
+    <div id="overlay" class="fixed inset-0 bg-black/40 hidden z-40"></div>
+</header>
+
+  <section class="bg-gradient-to-r from-white to-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-2">Encontre e reserve espaços rapidamente</h2>
+      <p class="text-gray-600 mb-4">Veja disponibilidade em tempo real e confirme sua reserva em poucos passos.</p>
+    </div>
+  </section>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </main>
+
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50 overflow-y-auto p-4">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl mx-4">
+      <div class="px-6 py-4 border-b flex justify-between items-center"><h4 id="modalTitle" class="font-semibold">Detalhes do Espaço</h4><button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button></div>
+      <div class="px-6 py-4" id="modalBody"></div>
+      <div class="px-6 py-4 border-t flex justify-end gap-3"><button id="cancelBtn" class="px-4 py-2 rounded-md border">Fechar</button><button id="reserveBtn" class="px-4 py-2 rounded-md bg-primary text-white">Reservar</button></div>
+    </div>
+  </div>
+
+  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+      <div class="px-6 py-4 border-b flex justify-between items-center"><h4 class="font-semibold">Entrar</h4><button id="closeLoginModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button></div>
+      <form id="loginForm" class="px-6 py-4 space-y-3"><input id="loginEmail" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded-md" required /><input id="loginPassword" type="password" placeholder="Senha" class="w-full px-3 py-2 border rounded-md" required /></form>
+      <div class="px-6 py-4 border-t flex justify-end gap-3"><button id="cancelLoginBtn" class="px-4 py-2 rounded-md border">Cancelar</button><button id="submitLoginBtn" type="submit" form="loginForm" class="px-4 py-2 rounded-md bg-primary text-white">Entrar</button></div>
+    </div>
+  </div>
+  <div id="registerModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+      <div class="px-6 py-4 border-b flex justify-between items-center"><h4 class="font-semibold">Cadastrar</h4><button id="closeRegisterModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button></div>
+      <form id="registerForm" class="px-6 py-4 space-y-3">
+        <div class="flex gap-4 mb-4"><label class="flex items-center gap-2"><input type="radio" name="userType" value="user" checked class="accent-primary"> Usuário</label><label class="flex items-center gap-2"><input type="radio" name="userType" value="admin" class="accent-primary"> Administrador</label></div>
+        <input id="registerName" type="text" placeholder="Nome Completo" class="w-full px-3 py-2 border rounded-md" required />
+        <input id="registerCpf" type="text" placeholder="CPF" class="w-full px-3 py-2 border rounded-md" required />
+        <input id="registerEmail" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded-md" required />
+        <input id="registerPassword" type="password" placeholder="Senha" class="w-full px-3 py-2 border rounded-md" required />
+      </form>
+      <div class="px-6 py-4 border-t flex justify-end gap-3"><button id="cancelRegisterBtn" class="px-4 py-2 rounded-md border">Cancelar</button><button id="submitRegisterBtn" type="submit" form="registerForm" class="px-4 py-2 rounded-md bg-accent text-white">Cadastrar</button></div>
+    </div>
+  </div>
+
+ <script>
+  // ------------------ GERENCIAMENTO DE AUTENTICAÇÃO ------------------
+  const authManager = {
+    login(data) {
+      // Adapta user_data se for string
+      if (typeof data.user_data === 'string') {
+        data.user_data = { nome: data.user_data, email: document.getElementById('loginEmail').value };
+      }
+      sessionStorage.setItem('userData', JSON.stringify(data));
+      this.updateUI();
+    },
+    logout() {
+      sessionStorage.removeItem('userData');
+      this.updateUI();
+      if (window.location.pathname === '/admin') window.location.href = '/';
+    },
+    isLoggedIn() {
+      return sessionStorage.getItem('userData') !== null;
+    },
+    getUserData() {
+      return JSON.parse(sessionStorage.getItem('userData'));
+    },
+    updateUI() {
+      const loggedIn = this.isLoggedIn();
+      const userData = loggedIn ? this.getUserData().user_data : null;
+
+      const elements = {
+        userInfo: document.getElementById('userInfo'),
+        authButtons: document.getElementById('authButtons'),
+        userName: document.getElementById('userName'),
+        logoutBtn: document.getElementById('logoutBtn'),
+        mobileUserInfo: document.getElementById('mobileUserInfo'),
+        mobileAuthButtons: document.getElementById('mobileAuthButtons'),
+        mobileUserName: document.getElementById('mobileUserName'),
+        mobileLogoutBtn: document.getElementById('mobileLogoutBtn'),
+      };
+
+      if (loggedIn) {
+        elements.userName.textContent = userData.nome;
+        elements.mobileUserName.textContent = userData.nome;
+        elements.userInfo.classList.replace('hidden', 'flex');
+        elements.authButtons.classList.add('hidden');
+        elements.mobileUserInfo.classList.replace('hidden', 'flex');
+        elements.mobileAuthButtons.classList.add('hidden');
+
+        // Remove listeners anteriores para não duplicar
+        elements.logoutBtn.replaceWith(elements.logoutBtn.cloneNode(true));
+        elements.mobileLogoutBtn.replaceWith(elements.mobileLogoutBtn.cloneNode(true));
+        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+        document.getElementById('mobileLogoutBtn').addEventListener('click', () => this.logout());
+      } else {
+        elements.userInfo.classList.add('hidden');
+        elements.authButtons.classList.remove('hidden');
+        elements.mobileUserInfo.classList.add('hidden');
+        elements.mobileAuthButtons.classList.remove('hidden');
+      }
+    }
+  };
+
+  // ------------------ MODAIS DE LOGIN E REGISTRO ------------------
+  const loginModal = document.getElementById('loginModal');
+  const registerModal = document.getElementById('registerModal');
+
+  function openAuthModal(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  function closeAuthModal(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+  ['loginBtn','mobileLoginBtn'].forEach(id => document.getElementById(id)?.addEventListener('click', () => openAuthModal(loginModal)));
+  ['registerBtn','mobileRegisterBtn'].forEach(id => document.getElementById(id)?.addEventListener('click', () => openAuthModal(registerModal)));
+
+  ['closeLoginModal','cancelLoginBtn'].forEach(id => document.getElementById(id)?.addEventListener('click', () => closeAuthModal(loginModal)));
+  ['closeRegisterModal','cancelRegisterBtn'].forEach(id => document.getElementById(id)?.addEventListener('click', () => closeAuthModal(registerModal)));
+
+  // ------------------ FORMULÁRIO DE LOGIN ------------------
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const loginEmail = document.getElementById('loginEmail').value;
+    const loginPassword = document.getElementById('loginPassword').value;
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, senha: loginPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Erro ao fazer login.');
+      authManager.login(data);
+      closeAuthModal(loginModal);
+
+      if (data.user_type === 'admin') window.location.href = '/admin';
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
+  });
+
+  // ------------------ FORMULÁRIO DE REGISTRO ------------------
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userType = document.querySelector('input[name="userType"]:checked').value;
+    const payload = {
+      cpf: document.getElementById('registerCpf').value,
+      nome: document.getElementById('registerName').value,
+      email: document.getElementById('registerEmail').value,
+      senha: document.getElementById('registerPassword').value // ajustado
+    };
+    const endpoint = userType === 'user' ? '/api/register/user' : '/api/register/admin';
+
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.description || 'Erro ao cadastrar.');
+      }
+      alert('Cadastro realizado com sucesso! Faça login agora.');
+      closeAuthModal(registerModal);
+      e.target.reset();
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
+  });
+
+  // ------------------ ESPAÇOS E RESERVAS ------------------
+  const container = document.getElementById('cardsContainer');
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  const reserveBtn = document.getElementById('reserveBtn');
+  let currentEspacos = [];
+  let selectedSlot = null;
+
+  function renderCards(list) {
+    container.innerHTML = list.length === 0 
+      ? '<div class="col-span-full text-center text-gray-500">Nenhum espaço encontrado.</div>' 
+      : '';
+    list.forEach(e => {
+      const card = document.createElement('article');
+      card.className = 'bg-white rounded-lg shadow p-4 flex flex-col justify-between hover:shadow-md transition cursor-pointer';
+      card.innerHTML = `
+        <div>
+          <h3 class="font-semibold text-lg">${e.nome}</h3>
+          <p class="text-sm text-gray-500">${e.descricao}</p>
+          <div class="mt-3 text-xs flex items-center gap-2">
+            <span class="${e.disponibilidade ? 'text-green-600' : 'text-red-600'} font-medium">${e.disponibilidade ? 'Disponível' : 'Indisponível'}</span>
+            <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">${e.tipo}</span>
+          </div>
+        </div>`;
+      card.addEventListener('click', () => openEspacoModal(e));
+      container.appendChild(card);
+    });
+  }
+
+  async function fetchAvailableSlots(espacoId, date) {
+    const slotsContainer = document.getElementById('slotsContainer');
+    slotsContainer.innerHTML = '<p class="text-sm text-gray-500">Carregando horários...</p>';
+    try {
+      const res = await fetch(`/api/espacos/${espacoId}/horarios_disponiveis?data=${date}`);
+      if (!res.ok) throw new Error('Não foi possível buscar os horários.');
+      const slots = await res.json();
+      slotsContainer.innerHTML = slots.length === 0 
+        ? '<p class="text-sm text-red-500">Nenhum horário disponível.</p>' 
+        : '';
+      slots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.className = 'px-3 py-1.5 border rounded-md text-sm hover:bg-primary hover:text-white transition';
+        btn.textContent = slot.inicio;
+        btn.onclick = () => {
+          document.querySelectorAll('#slotsContainer button').forEach(b => b.classList.remove('bg-primary','text-white'));
+          btn.classList.add('bg-primary','text-white');
+          selectedSlot = slot.inicio;
+        };
+        slotsContainer.appendChild(btn);
+      });
+    } catch (err) {
+      slotsContainer.innerHTML = `<p class="text-sm text-red-500">${err.message}</p>`;
+    }
+  }
+
+  function openEspacoModal(espaco) {
+    const today = new Date().toISOString().split('T')[0];
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + espaco.antecedencia_maxima_dias);
+    const maxDateStr = maxDate.toISOString().split('T')[0];
+
+    const isLoggedIn = authManager.isLoggedIn();
+    const userData = authManager.getUserData()?.user_data;
+
+    modalTitle.textContent = espaco.nome;
+    modalBody.innerHTML = `
+      <p class="text-gray-700 mb-2">${espaco.descricao}</p>
+      <p class="text-sm text-gray-500 mb-4">Tipo: <span class="font-medium">${espaco.tipo}</span></p>
+      <p class="mb-4">Status atual: <strong>${espaco.disponibilidade ? 'Disponível' : 'Indisponível'}</strong></p>
+      ${!isLoggedIn ? '<p class="text-sm text-red-600 mb-3">Faça login para reservar.</p>' : ''}
+      <div class="${isLoggedIn ? '' : 'opacity-50 pointer-events-none'}">
+        <label class="block text-sm text-gray-600 mb-1">E-mail</label>
+        <input id="userEmailInput" type="email" class="w-full px-3 py-2 border rounded-md mb-3 bg-gray-100" value="${userData?.email || ''}" readonly />
+        <label class="block text-sm text-gray-600 mb-1">Data</label>
+        <input id="dateInput" type="date" class="w-full px-3 py-2 border rounded-md mb-3" min="${today}" max="${maxDateStr}" required />
+        <label class="block text-sm text-gray-600 mb-1">Horários disponíveis</label>
+        <div id="slotsContainer" class="flex flex-wrap gap-2 mb-3 border p-3 rounded-md min-h-[50px]">
+          <p class="text-sm text-gray-500">Selecione uma data.</p>
+        </div>
+        <label class="block text-sm text-gray-600 mb-1">Observações</label>
+        <textarea id="obsInput" rows="2" class="w-full px-3 py-2 border rounded-md" placeholder="Ex: Motivo, equipamentos..."></textarea>
+      </div>`;
+
+    document.getElementById('dateInput').addEventListener('change', () => {
+      selectedSlot = null;
+      if (document.getElementById('dateInput').value) fetchAvailableSlots(espaco.id, document.getElementById('dateInput').value);
+    });
+
+    reserveBtn.disabled = !espaco.disponibilidade || !isLoggedIn;
+    reserveBtn.textContent = espaco.disponibilidade ? 'Confirmar reserva' : 'Indisponível';
+    reserveBtn.onclick = () => { if (espaco.disponibilidade && isLoggedIn) handleReserve(espaco); };
+    openAuthModal(modal);
+  }
+
+  document.getElementById('closeModal').addEventListener('click', () => closeAuthModal(modal));
+  document.getElementById('cancelBtn').addEventListener('click', () => closeAuthModal(modal));
+
+  async function handleReserve(espaco) {
+    const date = document.getElementById('dateInput').value;
+    const obs = document.getElementById('obsInput').value;
+    const userData = authManager.getUserData()?.user_data;
+
+    if (!userData?.email || !date || !selectedSlot) return alert("Preencha todos os campos para reservar.");
+
+    try {
+      const res = await fetch('/api/reservas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_espaco: espaco.id,
+          user_email: userData.email,
+          data_reserva: date,
+          hora_inicio: selectedSlot,
+          observacoes: obs
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || 'Falha ao reservar.');
+      alert(`Reserva criada com sucesso: ${espaco.nome}`);
+      closeAuthModal(modal);
+      fetchEspacos();
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
+  }
+
+  async function fetchEspacos() {
+    try {
+      const res = await fetch('/api/espacos');
+      if (!res.ok) throw new Error('Falha ao buscar espaços.');
+      currentEspacos = await res.json();
+      renderCards(currentEspacos);
+    } catch (err) {
+      container.innerHTML = '<div class="col-span-full text-center text-red-500">Erro ao carregar os espaços.</div>';
+    }
+  }
+
+  // ------------------ INICIALIZAÇÃO ------------------
+  document.addEventListener('DOMContentLoaded', () => {
+    authManager.updateUI();
+    fetchEspacos();
+
+    // Menu Mobile
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const closeMobileMenu = document.getElementById('closeMobileMenu');
+    const overlay = document.getElementById('overlay');
+
+    function openSidebar() { mobileMenu.classList.remove('translate-x-full'); overlay.classList.remove('hidden'); }
+    function closeSidebar() { mobileMenu.classList.add('translate-x-full'); overlay.classList.add('hidden'); }
+
+    mobileMenuBtn.addEventListener('click', openSidebar);
+    closeMobileMenu.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+  });
+</script>
+
+</body>
+</html>
