@@ -1,0 +1,150 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valida — Início</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800">
+  <main class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-4">Bem-vindo ao Valida</h1>
+    <p class="mb-6">Escolha seu tipo e faça login ou cadastro. Se você recebeu um token/QR da instituição, cole-o abaixo.</p>
+
+    <div id="reader" style="width:300px; margin-top:10px"></div>
+        <button id="btnScan">Escanear QR</button>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Entrar</h2>
+        <form id="loginForm" class="space-y-3">
+          <select id="loginRole" class="w-full px-3 py-2 border rounded">
+            <option value="user">Usuário</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <input id="loginEmail" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded" required />
+          <input id="loginSenha" type="password" placeholder="Senha" class="w-full px-3 py-2 border rounded" required />
+          <button class="px-4 py-2 bg-blue-600 text-white rounded">Entrar</button>
+        </form>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Cadastrar</h2>
+        <form id="registerForm" class="space-y-3">
+          <select id="registerRole" class="w-full px-3 py-2 border rounded">
+            <option value="user">Usuário</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <input id="regNome" type="text" placeholder="Nome" class="w-full px-3 py-2 border rounded" required />
+          <input id="regCpf" type="text" placeholder="CPF" class="w-full px-3 py-2 border rounded" required />
+          <input id="regEmail" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded" required />
+          <input id="regSenha" type="password" placeholder="Senha" class="w-full px-3 py-2 border rounded" required />
+          <div>
+            <label class="text-sm">Vincular a uma instituição (opcional)</label>
+            <input id="regToken" type="text" placeholder="Cole aqui o token / QR" class="w-full px-3 py-2 border rounded mt-1" />
+          </div>
+          <button class="px-4 py-2 bg-green-600 text-white rounded">Cadastrar</button>
+        </form>
+      </div>
+    </div>
+
+    <section class="mt-8 bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">Entrar por token</h3>
+      <div class="flex gap-2">
+        <input id="joinToken" type="text" placeholder="Cole token da instituição" class="flex-1 px-3 py-2 border rounded" />
+        <select id="joinRole" class="px-3 py-2 border rounded">
+          <option value="user">Entrar como usuário</option>
+          <option value="admin">Entrar como admin</option>
+        </select>
+        <button id="joinBtn" class="px-4 py-2 bg-accent text-white rounded">Entrar</button>
+      </div>
+      <p class="text-sm text-gray-500 mt-2">Se você é admin, gere o token na área do admin e mostre o QR para seus usuários.</p>
+    </section>
+  </main>
+
+<script>
+
+    document.getElementById('btnScan').onclick = () => {
+  const reader = new Html5Qrcode("reader");
+  reader.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 200 },
+    decodedText => {
+      document.getElementById('joinToken').value = decodedText;
+      reader.stop();
+      alert("Token detectado! Agora clique em 'Entrar'");
+    },
+    err => {}
+  );
+};
+
+  // login
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const role = document.getElementById('loginRole').value;
+    const email = document.getElementById('loginEmail').value;
+    const senha = document.getElementById('loginSenha').value;
+    try {
+      const res = await fetch('/api/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, senha})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Erro ao logar');
+      // salvar session simples
+      sessionStorage.setItem('userData', JSON.stringify(data));
+      // redireciona conforme tipo
+      if (data.user_type === 'admin') window.location.href = '/admin';
+      else window.location.href = '/home';
+    } catch(err) { alert('Erro: ' + err.message); }
+  });
+
+  // register
+  document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const role = document.getElementById('registerRole').value;
+    const cpf = document.getElementById('regCpf').value;
+    const nome = document.getElementById('regNome').value;
+    const email = document.getElementById('regEmail').value;
+    const senha = document.getElementById('regSenha').value;
+    const token = document.getElementById('regToken').value.trim() || undefined;
+    const endpoint = role === 'user' ? '/api/register/user' : '/api/register/admin';
+    const payload = { cpf, nome, email, senha };
+    if (token) payload.token = token;
+    try {
+      const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const j = await res.json();
+        throw new Error(j.description || j.erro || 'Erro ao cadastrar');
+      }
+      alert('Cadastrado com sucesso! Faça login.');
+      e.target.reset();
+    } catch(err){ alert('Erro: ' + err.message); }
+  });
+
+  // join by token (assume logged user/admin)
+  document.getElementById('joinBtn').addEventListener('click', async () => {
+    const token = document.getElementById('joinToken').value.trim();
+    const role = document.getElementById('joinRole').value;
+    if (!token) return alert('Cole o token primeiro.');
+    // precisa de user_id/admin_id: pegue do sessionStorage (usuário logado)
+    const s = JSON.parse(sessionStorage.getItem('userData') || 'null');
+    if (!s) return alert('Faça login primeiro para vincular-se pelo token.');
+    const payload = { token };
+    if (s.user_type === 'user') payload.user_id = s.user_data.id;
+    else payload.admin_id = s.user_data.id;
+    payload.role = role === 'admin' ? 'admin' : 'user';
+    try {
+      const res = await fetch('/api/instituicoes/join_by_token', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.erro || 'Falha ao entrar por token');
+      alert(j.mensagem || 'Vinculado com sucesso!');
+      // opcional: atualizar session (fazer login novamente para recuperar institutions)
+    } catch(err){ alert('Erro: ' + err.message); }
+  });
+</script>
+</body>
+</html>

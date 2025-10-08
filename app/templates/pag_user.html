@@ -35,6 +35,8 @@
     <div class="md:hidden">
       <button id="mobileMenuBtn" class="p-2 rounded-md hover:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
     </div>
+    <p>Usuário: <span id="userNome"></span></p>
+    <p>Instituição ativa: <span id="instNome"></span></p>
     <div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform z-50">
       <div class="flex flex-col px-4 py-6 gap-4">
         <button id="closeMobileMenu" class="self-end text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
@@ -46,12 +48,22 @@
       </div>
     </div>
     <div id="overlay" class="fixed inset-0 bg-black/40 hidden z-40"></div>
+  </div>
 </header>
 
-  <section class="bg-gradient-to-r from-white to-gray-50 py-8">
-    <div class="max-w-6xl mx-auto px-4">
-      <h2 class="text-3xl sm:text-4xl font-bold mb-2">Encontre e reserve espaços rapidamente</h2>
-      <p class="text-gray-600 mb-4">Veja disponibilidade em tempo real e confirme sua reserva em poucos passos.</p>
+  <section class="bg-gradient-to-r from-primary/10 to-gray-50 py-10 mb-6">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-2 text-primary">Reserve espaços com facilidade</h2>
+        <p class="text-gray-700 mb-4 text-lg">Consulte disponibilidade em tempo real e faça sua reserva em poucos cliques.</p>
+      </div>
+      <div class="bg-white rounded-lg shadow px-6 py-4 flex flex-col items-start">
+        <label for="instSelect" class="font-medium text-gray-700 mb-2">Instituição ativa:</label>
+        <div class="flex gap-2 items-center">
+          <select id="instSelect" class="border rounded px-3 py-2 text-gray-800 focus:ring-primary focus:border-primary"></select>
+          <button id="btnTrocarInst" class="bg-primary hover:bg-accent text-white px-4 py-2 rounded transition">Trocar</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -89,6 +101,59 @@
   </div>
 
  <script>
+
+  const instSelect = document.getElementById('instSelect');
+instituicoes.forEach(i => {
+  const opt = document.createElement('option');
+  opt.value = i.id;
+  opt.textContent = i.nome;
+  if (i.id === userData.active_inst_id) opt.selected = true;
+  instSelect.appendChild(opt);
+});
+
+document.getElementById('btnTrocarInst').onclick = async () => {
+  const inst_id = Number(instSelect.value);
+  const endpoint = userType === 'admin'
+    ? `/api/admins/${userData.id}/switch_inst`
+    : `/api/users/${userData.id}/switch_inst`;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ inst_id })
+  });
+  const j = await res.json();
+  if (res.ok) {
+    alert(j.mensagem);
+    userData.active_inst_id = inst_id;
+    sessionStorage.setItem('userData', JSON.stringify({ ...session, user_data: userData }));
+    location.reload();
+  } else {
+    alert(j.erro || 'Erro ao trocar instituição');
+  }
+};
+
+  // --- sessão ---
+const session = JSON.parse(sessionStorage.getItem('userData') || 'null');
+if (!session) {
+  alert('Faça login novamente.');
+  window.location.href = '/';
+}
+
+const userType = session.user_type;
+const userData = session.user_data;
+const instituicoes = session.instituicoes || [];
+
+// mostra nome do usuário
+document.getElementById('userNome').textContent = userData.nome;
+
+// mostrar nome da instituição ativa (se houver)
+const instAtiva = instituicoes.find(i => i.id === userData.active_inst_id);
+if (instAtiva) {
+  document.getElementById('instNome').textContent = instAtiva.nome;
+} else if (instituicoes.length) {
+  document.getElementById('instNome').textContent = instituicoes[0].nome;
+}
+
   // ------------------ GERENCIAMENTO DE AUTENTICAÇÃO ------------------
   const authManager = {
     login(data) {

@@ -1,3 +1,4 @@
+# /mnt/data/__init__.py  (ou app/__init__.py conforme seu projeto)
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -11,7 +12,11 @@ def create_app():
     app = Flask(__name__, template_folder="templates")
     CORS(app)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        # fallback para sqlite local (não precisa psql)
+        database_url = 'sqlite:///valida.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
@@ -19,8 +24,8 @@ def create_app():
     from app import routes
     routes.init_routes(app)
 
-    @app.before_request
-    def create_tables():
+    with app.app_context():
+        # cria tabelas automaticamente (SQLite local se não tiver DATABASE_URL)
         db.create_all()
 
     return app

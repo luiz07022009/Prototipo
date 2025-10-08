@@ -17,7 +17,6 @@
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-800 antialiased">
 
-  <!-- HEADER -->
   <header class="bg-white shadow">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -28,7 +27,8 @@
         <a href="/planos" class="text-sm hover:underline">Planos</a>
         <a href="/" class="text-sm hover:underline">Página do Usuário</a>
         <div id="userInfo" class="hidden items-center gap-2">
-          <span id="userName" class="text-sm font-medium"></span>
+          <p>Usuário: <span id="userNome" class="font-medium"></span></p>
+          <p>Instituição: <span id="instNome" class="font-medium"></span></p>
           <button id="logoutBtn" class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md">Sair</button>
         </div>
         <div id="authButtons"><p class="text-sm text-gray-600">Faça login para gerenciar.</p></div>
@@ -36,20 +36,26 @@
     </div>
   </header>
 
-  <!-- MAIN -->
   <main class="max-w-6xl mx-auto px-4 py-8">
     <div id="loader" class="text-center py-10">
       <p class="text-gray-500">Verificando autenticação...</p>
     </div>
 
-    <!-- Painel de Instituição -->
+    <div id="instSelector" class="hidden mb-6 bg-white p-4 rounded-lg shadow-sm border">
+      <label for="instSelect" class="block mb-2 font-medium text-gray-700">Trocar de instituição ativa:</label>
+      <div class="flex items-center gap-2">
+        <select id="instSelect" class="flex-grow p-2 border rounded-md"></select>
+        <button id="btnTrocarInst" class="bg-primary hover:bg-teal-600 text-white px-4 py-2 rounded-md transition">Trocar</button>
+      </div>
+    </div>
+
     <div id="instituicaoPanel" class="hidden">
       <h2 class="text-2xl font-semibold mb-4">Bem-vindo, <span id="adminNameInst"></span>!</h2>
-      <p class="text-gray-600 mb-6">Para começar a gerenciar espaços, você precisa criar ou vincular uma instituição.</p>
+      <p class="text-gray-600 mb-6">Para começar, você precisa criar ou se vincular a uma instituição.</p>
       <div class="bg-white p-6 rounded-lg shadow">
         <h3 class="font-semibold text-lg mb-4 border-b pb-2">Criar Nova Instituição</h3>
         <form id="instituicaoForm" class="space-y-4">
-          <input id="instNome" type="text" placeholder="Nome da Instituição" class="w-full px-3 py-2 border rounded-md" required />
+          <input id="instNomeInput" type="text" placeholder="Nome da Instituição" class="w-full px-3 py-2 border rounded-md" required />
           <input id="instCnpj" type="text" placeholder="CNPJ" class="w-full px-3 py-2 border rounded-md" required />
           <input id="instEmail" type="email" placeholder="E-mail da Instituição" class="w-full px-3 py-2 border rounded-md" required />
           <button type="submit" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700">Criar e Vincular</button>
@@ -57,264 +63,252 @@
       </div>
     </div>
 
-    <!-- Painel de Gerenciamento -->
     <div id="managementPanel" class="hidden">
+      <section id="tokenSec" class="mb-8 p-4 bg-gray-100 rounded-lg border">
+        <h3 class="font-semibold mb-2">Token de Vínculo da Instituição</h3>
+        <p class="mb-3 text-sm text-gray-600">Use este token ou QR Code para que outros usuários e admins possam se vincular a esta instituição.</p>
+        <div class="flex items-center gap-6">
+            <p id="tokenTexto" class="text-center font-mono p-2 bg-gray-200 rounded text-gray-800">Carregando...</p>
+            <div id="qr"></div>
+        </div>
+      </section>
+
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <h2 class="text-2xl font-semibold">Gerenciamento de Espaços</h2>
         <button id="addBtn" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700">+ Novo Espaço</button>
       </div>
 
-      <!-- Tabela de Espaços -->
       <div class="overflow-x-auto bg-white rounded-lg shadow mb-12">
         <table class="min-w-full text-sm">
-          <thead class="bg-gray-100 text-gray-700">
-            <tr>
-              <th class="text-left px-4 py-3">Nome</th>
-              <th class="text-left px-4 py-3">Descrição</th>
-              <th class="text-left px-4 py-3">Tipo</th>
-              <th class="text-center px-4 py-3">Disponível</th>
-              <th class="text-center px-4 py-3">Ações</th>
-            </tr>
-          </thead>
+          <thead class="bg-gray-100 text-gray-700"><tr><th class="text-left px-4 py-3">Nome</th><th class="text-left px-4 py-3">Tipo</th><th class="text-left px-4 py-3 max-w-xs">Descrição</th><th class="text-center px-4 py-3">Disponível</th><th class="text-center px-4 py-3">Ações</th></tr></thead>
           <tbody id="tableBody" class="divide-y"></tbody>
         </table>
       </div>
 
-      <!-- Histórico de Reservas -->
-      <h2 class="text-2xl font-semibold mb-6">Histórico de Reservas</h2>
+      <h2 class="text-2xl font-semibold mb-6">Histórico de Reservas da Instituição</h2>
       <div class="overflow-x-auto bg-white rounded-lg shadow">
         <table class="min-w-full text-sm">
-          <thead class="bg-gray-100 text-gray-700">
-            <tr>
-              <th class="text-left px-4 py-3">Espaço</th>
-              <th class="text-left px-4 py-3">Solicitante</th>
-              <th class="text-left px-4 py-3">Email</th>
-              <th class="text-left px-4 py-3">Data</th>
-              <th class="text-left px-4 py-3">Horário</th>
-              <th class="text-left px-4 py-3">Observações</th>
-            </tr>
-          </thead>
+          <thead class="bg-gray-100 text-gray-700"><tr><th class="text-left px-4 py-3">Espaço</th><th class="text-left px-4 py-3">Solicitante</th><th class="text-left px-4 py-3">Email</th><th class="text-left px-4 py-3">Data</th><th class="text-left px-4 py-3">Horário</th><th class="text-left px-4 py-3">Obs.</th></tr></thead>
           <tbody id="historyTableBody" class="divide-y"></tbody>
         </table>
       </div>
     </div>
   </main>
 
-  <!-- MODAL DE ESPAÇO -->
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
-      <div class="px-6 py-4 border-b flex justify-between items-center">
-        <h4 id="modalTitle" class="font-semibold">Novo Espaço</h4>
-        <button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button>
-      </div>
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50 p-4">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto">
+      <div class="px-6 py-4 border-b flex justify-between items-center"><h4 id="modalTitle" class="font-semibold">Novo Espaço</h4><button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button></div>
       <div class="px-6 py-4 space-y-3">
         <input id="nomeInput" type="text" placeholder="Nome do espaço" class="w-full px-3 py-2 border rounded-md" />
         <input id="tipoInput" type="text" placeholder="Ex: Laboratório, Sala de Reunião" class="w-full px-3 py-2 border rounded-md" />
         <textarea id="descInput" rows="3" placeholder="Descrição" class="w-full px-3 py-2 border rounded-md"></textarea>
-        <label class="flex items-center gap-2 text-sm">
-          <input id="dispInput" type="checkbox" class="accent-primary" /> Disponível
-        </label>
+        <label class="flex items-center gap-2 text-sm"><input id="dispInput" type="checkbox" class="accent-primary h-4 w-4" /> Disponível para reservas</label>
       </div>
-      <div class="px-6 py-4 border-t flex justify-end gap-3">
-        <button id="cancelBtn" class="px-4 py-2 rounded-md border">Cancelar</button>
-        <button id="saveBtn" class="px-4 py-2 rounded-md bg-primary text-white">Salvar</button>
-      </div>
+      <div class="px-6 py-4 border-t flex justify-end gap-3"><button id="cancelBtn" class="px-4 py-2 rounded-md border">Cancelar</button><button id="saveBtn" class="px-4 py-2 rounded-md bg-primary text-white">Salvar</button></div>
     </div>
   </div>
 
-  <!-- SCRIPTS -->
   <script>
-    // --- GERENCIAMENTO DE LOGIN ---
-    const authManager = {
-      login(data) { sessionStorage.setItem('userData', JSON.stringify(data)); this.updateUI(); },
-      logout() { sessionStorage.removeItem('userData'); window.location.href = '/'; },
-      isLoggedIn() { return !!sessionStorage.getItem('userData'); },
-      getUserData() { return JSON.parse(sessionStorage.getItem('userData')); },
-      updateUI() {
-        const loggedIn = this.isLoggedIn();
-        const userData = loggedIn ? this.getUserData().user_data : null;
-        if (loggedIn && this.getUserData().user_type === 'admin') {
-          document.getElementById('userInfo').classList.remove('hidden'); document.getElementById('userInfo').classList.add('flex');
-          document.getElementById('authButtons').classList.add('hidden');
-          document.getElementById('userName').textContent = userData.nome;
-          document.getElementById('logoutBtn').onclick = () => this.logout();
-          initAdminPanel(userData);
-        } else {
-          document.getElementById('userInfo').classList.add('hidden');
-          document.getElementById('authButtons').classList.remove('hidden');
-          document.getElementById('loader').innerHTML = loggedIn 
-            ? '<p class="text-red-500">Acesso negado. Esta página é apenas para administradores.</p>'
-            : '<p class="text-red-500">Você precisa fazer login como administrador para acessar esta página.</p>';
-        }
-      }
-    };
-
     // --- VARIÁVEIS GLOBAIS ---
     const tbody = document.getElementById('tableBody');
     const historyTbody = document.getElementById('historyTableBody');
     const modal = document.getElementById('modal');
     let editingId = null;
     let adminData = null;
+    let sessionData = null;
 
-    // --- FUNÇÕES ADMIN ---
-    function initAdminPanel(userData) {
-      adminData = userData;
-      document.getElementById('loader').classList.add('hidden');
-      if (adminData.id_inst) {
-        document.getElementById('managementPanel').classList.remove('hidden');
-        fetchEspacos();
-        fetchHistory();
-      } else {
-        document.getElementById('instituicaoPanel').classList.remove('hidden');
-        document.getElementById('adminNameInst').textContent = adminData.nome;
-      }
-    }
-
-    async function fetchEspacos() {
-      try {
-        const response = await fetch('/api/espacos');
-        if (!response.ok) throw new Error('Falha ao buscar espaços.');
-        const espacos = (await response.json()).filter(e => e.id_inst === adminData.id_inst);
-        renderTable(espacos);
-      } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${error.message}</td></tr>`;
-      }
-    }
-
+    // --- FUNÇÕES DE RENDERIZAÇÃO ---
     function renderTable(list) {
       tbody.innerHTML = list.length ? '' : '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum espaço cadastrado.</td></tr>';
       list.forEach(e => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-4 py-2 font-medium">${e.nome}</td><td class="px-4 py-2">${e.descricao}</td><td class="px-4 py-2">${e.tipo}</td>
+        tr.innerHTML = `<td class="px-4 py-2 font-medium">${e.nome}</td><td class="px-4 py-2">${e.tipo}</td><td class="px-4 py-2 text-gray-600">${e.descricao}</td>
           <td class="px-4 py-2 text-center"><span class="px-2 py-1 text-xs rounded ${e.disponibilidade ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${e.disponibilidade ? 'Sim' : 'Não'}</span></td>
-          <td class="px-4 py-2 text-center space-x-2"><button class="editBtn px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Editar</button><button class="delBtn px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs">Excluir</button></td>`;
+          <td class="px-4 py-2 text-center space-x-2"><button class="editBtn px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs hover:bg-blue-200">Editar</button><button class="delBtn px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs hover:bg-red-200">Excluir</button></td>`;
         tr.querySelector('.editBtn').onclick = () => openModal(e);
         tr.querySelector('.delBtn').onclick = () => deleteEspaco(e.id);
         tbody.appendChild(tr);
       });
     }
 
-    function openModal(espaco = null) {
-      modal.classList.remove('hidden'); modal.classList.add('flex');
-      if (espaco) {
-        editingId = espaco.id;
-        document.getElementById('modalTitle').textContent = 'Editar Espaço';
-        document.getElementById('nomeInput').value = espaco.nome;
-        document.getElementById('tipoInput').value = espaco.tipo;
-        document.getElementById('descInput').value = espaco.descricao;
-        document.getElementById('dispInput').checked = espaco.disponibilidade;
-      } else {
-        editingId = null;
-        document.getElementById('modalTitle').textContent = 'Novo Espaço';
-        document.getElementById('nomeInput').value = '';
-        document.getElementById('tipoInput').value = '';
-        document.getElementById('descInput').value = '';
-        document.getElementById('dispInput').checked = true;
+    function renderHistory(list) {
+      historyTbody.innerHTML = !list.length ? '<tr><td colspan="6" class="text-center text-gray-500 py-4">Nenhuma reserva encontrada.</td></tr>' : '';
+      list.forEach(h => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-4 py-2 font-medium">${h.espaco_nome}</td><td>${h.user_nome}</td><td>${h.user_email}</td><td>${h.data_reserva}</td><td>${h.hora_inicio} - ${h.hora_fim}</td><td class="px-4 py-2 text-gray-600">${h.observacoes||'-'}</td>`;
+        historyTbody.appendChild(tr);
+      });
+    }
+
+    // --- FUNÇÕES DE API ---
+    async function fetchEspacos() {
+      if (!adminData?.active_inst_id) return;
+      try {
+        const res = await fetch(`/api/espacos?inst_id=${adminData.active_inst_id}`);
+        if (!res.ok) throw new Error('Falha ao buscar espaços.');
+        renderTable(await res.json());
+      } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-4">${error.message}</td></tr>`;
       }
     }
 
-    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-
-    async function saveEspaco() {
-      const data = {
-        id_inst: adminData.id_inst,
-        nome: document.getElementById('nomeInput').value,
-        tipo: document.getElementById('tipoInput').value,
-        descricao: document.getElementById('descInput').value,
-        disponibilidade: document.getElementById('dispInput').checked
-      };
-      try {
-        const response = await fetch(editingId ? `/api/espacos/${editingId}` : '/api/espacos', {
-          method: editingId ? 'PUT' : 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(data)
-        });
-        if (!response.ok) throw new Error('Falha ao salvar.');
-        closeModal(); fetchEspacos();
-      } catch { alert("Ocorreu um erro ao salvar o espaço."); }
-    }
-
-    async function deleteEspaco(id) {
-      if (!confirm('Deseja realmente excluir este espaço?')) return;
-      try {
-        const response = await fetch(`/api/espacos/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Falha ao deletar.');
-        fetchEspacos();
-      } catch { alert("Ocorreu um erro ao deletar o espaço."); }
-    }
-
     async function fetchHistory() {
+      if (!adminData?.active_inst_id) return;
       try {
-        const response = await fetch('/api/reservas');
-        if (!response.ok) throw new Error('Falha ao buscar histórico.');
-        const allReservas = await response.json();
-        const espacosDoAdmin = Array.from(tbody.querySelectorAll('td:first-child')).map(td => td.textContent);
-        const historyList = allReservas.filter(h => espacosDoAdmin.includes(h.espaco_nome));
-        historyTbody.innerHTML = '';
-        if (!historyList.length) {
-          historyTbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">Nenhuma reserva encontrada para seus espaços.</td></tr>';
-          return;
-        }
-        historyList.forEach(h => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td class="px-4 py-2 font-medium">${h.espaco_nome}</td><td>${h.user_nome}</td><td>${h.user_email}</td><td>${h.data_reserva}</td><td>${h.hora_inicio} - ${h.hora_fim}</td><td class="px-4 py-2">${h.observacoes||'-'}</td>`;
-          historyTbody.appendChild(tr);
-        });
+        const res = await fetch(`/api/reservas?inst_id=${adminData.active_inst_id}`);
+        if (!res.ok) throw new Error('Falha ao buscar histórico.');
+        renderHistory(await res.json());
       } catch (error) {
         historyTbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-4">${error.message}</td></tr>`;
       }
     }
 
-    // saljd
-document.getElementById('instituicaoForm').onsubmit = async e => {
-  e.preventDefault();
-
-  const payload = {
-    nome: document.getElementById('instNome').value.trim(),
-    cnpj: document.getElementById('instCnpj').value.trim(),
-    email: document.getElementById('instEmail').value.trim(),
-    admin_id: adminData.id
-  };
-
-  try {
-    // Verifica se já existe uma instituição com o mesmo CNPJ
-    const checkResponse = await fetch(`/api/instituicoes?cnpj=${payload.cnpj}`);
-    if (!checkResponse.ok) throw new Error('Erro ao verificar CNPJ existente.');
-
-    const existing = await checkResponse.json();
-
-    if (Array.isArray(existing) && existing.length > 0) {
-      alert('Já existe uma instituição com esse CNPJ no banco de dados.');
-      return;
+    async function fetchToken() {
+        if (!adminData?.active_inst_id) return;
+        const res = await fetch(`/api/instituicoes/${adminData.active_inst_id}/token?admin_id=${adminData.id}`);
+        const j = await res.json();
+        const tokenTexto = document.getElementById('tokenTexto');
+        if (res.ok) {
+            tokenTexto.textContent = j.token;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${j.token}`;
+            document.getElementById('qr').innerHTML = `<img src="${qrUrl}" alt="QR Token" class="rounded shadow"/>`;
+        } else {
+            tokenTexto.textContent = j.erro || 'Erro ao obter token';
+        }
     }
 
-    // Cria nova instituição
-    const response = await fetch('/api/instituicoes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    async function saveEspaco() {
+      const data = {
+        id_inst: adminData.active_inst_id,
+        nome: document.getElementById('nomeInput').value,
+        tipo: document.getElementById('tipoInput').value,
+        descricao: document.getElementById('descInput').value,
+        disponibilidade: document.getElementById('dispInput').checked
+      };
+      const method = editingId ? 'PUT' : 'POST';
+      const endpoint = editingId ? `/api/espacos/${editingId}` : '/api/espacos';
+      try {
+        const res = await fetch(endpoint, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        if (!res.ok) throw new Error('Falha ao salvar.');
+        closeModal();
+        fetchEspacos();
+      } catch { alert("Ocorreu um erro ao salvar."); }
+    }
+
+    async function deleteEspaco(id) {
+      if (!confirm('Deseja realmente excluir este espaço?')) return;
+      try {
+        const res = await fetch(`/api/espacos/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Falha ao deletar.');
+        fetchEspacos();
+      } catch { alert("Ocorreu um erro ao deletar."); }
+    }
+
+    // --- MODAL & FORMULÁRIOS ---
+    function openModal(espaco = null) {
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      editingId = espaco ? espaco.id : null;
+      document.getElementById('modalTitle').textContent = espaco ? 'Editar Espaço' : 'Novo Espaço';
+      document.getElementById('nomeInput').value = espaco ? espaco.nome : '';
+      document.getElementById('tipoInput').value = espaco ? espaco.tipo : '';
+      document.getElementById('descInput').value = espaco ? espaco.descricao : '';
+      document.getElementById('dispInput').checked = espaco ? espaco.disponibilidade : true;
+    }
+
+    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+    document.getElementById('instituicaoForm').onsubmit = async e => {
+        e.preventDefault();
+        const payload = {
+            nome: document.getElementById('instNomeInput').value.trim(),
+            cnpj: document.getElementById('instCnpj').value.trim(),
+            email: document.getElementById('instEmail').value.trim(),
+            admin_id: adminData.id
+        };
+        try {
+            const res = await fetch('/api/instituicoes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.erro || 'Não foi possível criar a instituição.');
+            alert('Instituição criada! A página será recarregada.');
+            window.location.reload();
+        } catch (error) {
+            alert(`Erro: ${error.message}`);
+        }
+    };
+
+    // --- INICIALIZAÇÃO E AUTENTICAÇÃO ---
+    function initAdminPanel(userData, instituicoes) {
+      adminData = userData;
+      document.getElementById('loader').classList.add('hidden');
+      document.getElementById('userNome').textContent = adminData.nome;
+
+      const instAtiva = instituicoes.find(i => i.id === adminData.active_inst_id);
+      document.getElementById('instNome').textContent = instAtiva ? instAtiva.nome : 'Nenhuma';
+
+      if (adminData.active_inst_id) {
+        document.getElementById('managementPanel').classList.remove('hidden');
+        document.getElementById('instSelector').classList.remove('hidden');
+        fetchEspacos();
+        fetchHistory();
+        fetchToken();
+      } else {
+        document.getElementById('instituicaoPanel').classList.remove('hidden');
+        document.getElementById('adminNameInst').textContent = adminData.nome;
+      }
+    }
+
+    function setupInstitutionSwitcher(session) {
+        const instSelect = document.getElementById('instSelect');
+        const instituicoes = session.instituicoes || [];
+        instituicoes.forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i.id;
+            opt.textContent = i.nome;
+            if (i.id === session.user_data.active_inst_id) opt.selected = true;
+            instSelect.appendChild(opt);
+        });
+        document.getElementById('btnTrocarInst').onclick = async () => {
+            const inst_id = Number(instSelect.value);
+            const res = await fetch(`/api/admin/${session.user_data.id}/switch_inst`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ inst_id })
+            });
+            if (res.ok) {
+                alert('Instituição trocada. A página será recarregada.');
+                // Atualizar sessionStorage para refletir a mudança antes de recarregar
+                const updatedUserData = { ...session.user_data, active_inst_id: inst_id };
+                sessionStorage.setItem('userData', JSON.stringify({ ...session, user_data: updatedUserData }));
+                location.reload();
+            } else {
+                alert('Erro ao trocar de instituição');
+            }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      sessionData = JSON.parse(sessionStorage.getItem('userData') || 'null');
+      if (!sessionData || sessionData.user_type !== 'admin') {
+        document.getElementById('loader').innerHTML = '<p class="text-red-500">Acesso negado. Esta página é apenas para administradores.</p>';
+        return;
+      }
+      
+      document.getElementById('userInfo').classList.replace('hidden', 'flex');
+      document.getElementById('authButtons').classList.add('hidden');
+      document.getElementById('logoutBtn').onclick = () => {
+        sessionStorage.removeItem('userData');
+        window.location.href = '/';
+      };
+
+      initAdminPanel(sessionData.user_data, sessionData.instituicoes);
+      setupInstitutionSwitcher(sessionData);
+
+      // Event Listeners
+      document.getElementById('addBtn').onclick = () => openModal();
+      document.getElementById('closeModal').onclick = closeModal;
+      document.getElementById('cancelBtn').onclick = closeModal;
+      document.getElementById('saveBtn').onclick = saveEspaco;
     });
-
-
-    if (!response.ok) throw new Error('Não foi possível criar a instituição.');
-    
-    alert('Instituição criada com sucesso!');
-    window.location.reload();
-
-  } catch (error) {
-    alert(`Erro: ${error.message}`);
-  }
-};
-
-//ksauf
-
-    document.getElementById('addBtn').onclick = () => openModal();
-    document.getElementById('closeModal').onclick = closeModal;
-    document.getElementById('cancelBtn').onclick = closeModal;
-    document.getElementById('saveBtn').onclick = saveEspaco;
-
-    document.addEventListener('DOMContentLoaded', () => authManager.updateUI());
   </script>
-
 </body>
 </html>
