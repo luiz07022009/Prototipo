@@ -8,6 +8,7 @@ import uuid
 def init_routes(app):
 
     # --- ROTAS HTML ---
+    # Rotas para renderizar páginas HTML
     @app.route('/')
     def index():
         return render_template('index.html')
@@ -24,9 +25,12 @@ def init_routes(app):
     def planos():
         return render_template('pag_planos.html')
 
+
     # --- API: INSTITUIÇÕES ---
+    
     @app.route('/api/instituicoes', methods=['POST'])
     def criar_instituicao():
+        ''' Cria uma nova instituição e vincula ao admin '''
         data = request.get_json()
         nome = data.get('nome')
         cnpj = data.get('cnpj')
@@ -60,6 +64,7 @@ def init_routes(app):
 
     @app.route('/api/instituicoes', methods=['GET'])
     def listar_instituicoes():
+        ''' Lista todas as instituições ou filtra por CNPJ  '''
         cnpj = request.args.get('cnpj')
         if cnpj:
             insts = Instituicao.query.filter_by(cnpj=cnpj).all()
@@ -69,6 +74,7 @@ def init_routes(app):
 
     @app.route('/api/instituicoes/<int:inst_id>/token', methods=['GET'])
     def get_instituicao_token(inst_id):
+        ''' Retorna o token de uma instituição se o admin estiver vinculado a ela '''
         admin_id = request.args.get('admin_id', type=int)
         inst = Instituicao.query.get_or_404(inst_id)
         if admin_id:
@@ -82,6 +88,7 @@ def init_routes(app):
 
     @app.route('/api/instituicoes/join_by_token', methods=['POST'])
     def join_by_token():
+        ''' Vincula um usuário ou admin a uma instituição via token da instituição '''
         data = request.get_json()
         token = data.get('token')
         user_id = data.get('user_id')
@@ -121,6 +128,7 @@ def init_routes(app):
 
     @app.route('/api/instituicoes/vincular', methods=['POST'])
     def vincular_instituicao():
+        ''' Vincula um admin a uma instituição existente '''
         data = request.get_json()
         admin_id = data.get('admin_id')
         inst_id = data.get('inst_id')
@@ -135,33 +143,11 @@ def init_routes(app):
         db.session.commit()
         return jsonify({'mensagem': f'{admin.nome} vinculado à instituição {inst.nome}.'}), 200
 
-    @app.route('/api/users/<int:user_id>/switch_inst', methods=['POST'])
-    def switch_user_inst(user_id):
-        data = request.get_json()
-        inst_id = data.get('inst_id')
-        user = User.query.get_or_404(user_id)
-        inst = Instituicao.query.get_or_404(inst_id)
-        if inst not in user.instituicoes:
-            return jsonify({'erro': 'Usuário não pertence a essa instituição.'}), 403
-        user.active_inst_id = inst.id
-        db.session.commit()
-        return jsonify({'mensagem': f'Instituição ativa alterada para {inst.nome}', 'active_inst_id': user.active_inst_id}), 200
-
-    @app.route('/api/admins/<int:admin_id>/switch_inst', methods=['POST'])
-    def switch_admin_inst(admin_id):
-        data = request.get_json()
-        inst_id = data.get('inst_id')
-        admin = Admin.query.get_or_404(admin_id)
-        inst = Instituicao.query.get_or_404(inst_id)
-        if inst not in admin.instituicoes:
-            return jsonify({'erro': 'Admin não pertence a essa instituição.'}), 403
-        admin.active_inst_id = inst.id
-        db.session.commit()
-        return jsonify({'mensagem': f'Instituição ativa alterada para {inst.nome}', 'active_inst_id': admin.active_inst_id}), 200
 
     # --- API: ESPAÇOS ---
     @app.route('/api/espacos', methods=['GET'])
     def get_espacos():
+        ''' Lista todos os espaços ou filtra por instituição '''
         inst_id = request.args.get('inst_id', type=int)
         query = Espaco.query
         if inst_id:
@@ -171,6 +157,7 @@ def init_routes(app):
 
     @app.route('/api/espacos', methods=['POST'])
     def create_espaco():
+        ''' Cria um novo espaço '''
         data = request.get_json()
         if not data or not all(k in data for k in ['id_inst', 'nome', 'tipo']):
             abort(400, description="Faltando 'id_inst', 'nome' ou 'tipo'.")
@@ -190,6 +177,7 @@ def init_routes(app):
 
     @app.route('/api/espacos/<int:id>', methods=['PUT'])
     def update_espaco(id):
+        ''' Atualiza os detalhes de um espaço '''
         espaco = Espaco.query.get_or_404(id)
         data = request.get_json()
         espaco.nome = data.get('nome', espaco.nome)
@@ -203,6 +191,7 @@ def init_routes(app):
 
     @app.route('/api/espacos/<int:id>', methods=['DELETE'])
     def delete_espaco(id):
+        ''' Deleta um espaço '''
         espaco = Espaco.query.get_or_404(id)
         db.session.delete(espaco)
         db.session.commit()
@@ -210,6 +199,7 @@ def init_routes(app):
 
     @app.route('/api/espacos/<int:espaco_id>/horarios_disponiveis', methods=['GET'])
     def get_horarios_disponiveis(espaco_id):
+        ''' Retorna os horários disponíveis para um espaço em uma data específica '''
         data_str = request.args.get('data')
         if not data_str:
             return jsonify({'erro': 'A data é obrigatória'}), 400
@@ -229,9 +219,11 @@ def init_routes(app):
         ]
         return jsonify(slots_disponiveis)
 
+
     # --- API: AUTENTICAÇÃO ---
     @app.route('/api/register/user', methods=['POST'])
     def register_user():
+        ''' Cria um novo usuário '''
         data = request.get_json()
         if not data or not all(k in data for k in ['cpf', 'nome', 'email', 'senha']):
             abort(400, description="Faltando dados para cadastro de usuário.")
@@ -259,6 +251,7 @@ def init_routes(app):
 
     @app.route('/api/register/admin', methods=['POST'])
     def register_admin():
+        ''' Cria um novo administrador '''
         data = request.get_json()
         if not data or not all(k in data for k in ['cpf', 'nome', 'email', 'senha']):
             abort(400, description="Faltando dados para cadastro de administrador.")
@@ -286,6 +279,7 @@ def init_routes(app):
 
     @app.route('/api/login', methods=['POST'])
     def login():
+        ''' Autentica um usuário ou admin e retorna seus dados '''
         data = request.get_json()
         if not data or not data.get('email') or not data.get('senha'):
             abort(400, description="E-mail ou senha não fornecidos.")
@@ -310,6 +304,7 @@ def init_routes(app):
     # --- API: RESERVAS ---
     @app.route('/api/reservas', methods=['GET'])
     def listar_reservas():
+        ''' Lista todas as reservas ou filtra por instituição '''
         inst_id = request.args.get('inst_id', type=int)
         query = Reserva.query
         if inst_id:
@@ -319,6 +314,7 @@ def init_routes(app):
 
     @app.route('/api/reservas', methods=['POST'])
     def criar_reserva():
+        ''' Cria uma nova reserva '''
         data = request.get_json()
         id_espaco = data.get('id_espaco')
         user_email = data.get('user_email')
@@ -355,8 +351,7 @@ def init_routes(app):
         if conflito and not esp.multi_reservas:
             return jsonify({'erro': 'Este horário já está reservado.'}), 409
 
-        reserva = Reserva(id_espaco=id_espaco, id_user=user.id, data_reserva=data_obj,
-                          hora_inicio=hora_inicio_obj, hora_fim=hora_fim_dt, observacoes=observacoes)
+        reserva = Reserva(id_espaco=id_espaco, id_user=user.id, data_reserva=data_obj, hora_inicio=hora_inicio_obj, hora_fim=hora_fim_dt, observacoes=observacoes)
         db.session.add(reserva)
         db.session.commit()
         return jsonify({'mensagem':'Reserva criada com sucesso'}), 201
