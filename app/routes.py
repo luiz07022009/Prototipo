@@ -1,9 +1,14 @@
 from flask import render_template, request, jsonify, abort
+from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from app import db
 from app.models import User, Admin, Instituicao, Espaco, Reserva, gerar_slots
+
+bcrypt = Bcrypt()
 import uuid
+
+
 
 def init_routes(app):
 
@@ -237,17 +242,21 @@ def init_routes(app):
     # --- API: AUTENTICAÇÃO ---
     @app.route('/api/register/user', methods=['POST'])
     def register_user():
-        ''' Cria um novo usuário '''
         data = request.get_json()
         if not data or not all(k in data for k in ['cpf', 'nome', 'email', 'senha']):
             abort(400, description="Faltando dados para cadastro de usuário.")
+
+        # Verifica duplicidade de email ou CPF
         if User.query.filter_by(email=data['email']).first() or Admin.query.filter_by(email=data['email']).first():
             abort(409, description="E-mail já cadastrado.")
         if User.query.filter_by(cpf=data['cpf']).first() or Admin.query.filter_by(cpf=data['cpf']).first():
             abort(409, description="CPF já cadastrado.")
+
+        # Gera hash da senha com Werkzeug
         hashed_password = generate_password_hash(data['senha'], method='pbkdf2:sha256')
         new_user = User(cpf=data['cpf'], nome=data['nome'], email=data['email'], senha=hashed_password)
-        db.session.add(new_user)
+
+        # Vincula a instituição, se fornecida
         token = data.get('token')
         inst_id = data.get('inst_id')
         if token:
@@ -260,22 +269,30 @@ def init_routes(app):
             if inst:
                 new_user.instituicoes.append(inst)
                 new_user.active_inst_id = inst.id
+
+        db.session.add(new_user)
         db.session.commit()
         return jsonify({'message': 'Usuário criado com sucesso!', 'user': new_user.to_dict()}), 201
 
+
+# --- Registro de Admin ---
     @app.route('/api/register/admin', methods=['POST'])
     def register_admin():
-        ''' Cria um novo administrador '''
         data = request.get_json()
         if not data or not all(k in data for k in ['cpf', 'nome', 'email', 'senha']):
             abort(400, description="Faltando dados para cadastro de administrador.")
+
+        # Verifica duplicidade de email ou CPF
         if User.query.filter_by(email=data['email']).first() or Admin.query.filter_by(email=data['email']).first():
             abort(409, description="E-mail já cadastrado.")
         if User.query.filter_by(cpf=data['cpf']).first() or Admin.query.filter_by(cpf=data['cpf']).first():
             abort(409, description="CPF já cadastrado.")
+
+        # Gera hash da senha com Werkzeug
         hashed_password = generate_password_hash(data['senha'], method='pbkdf2:sha256')
         new_admin = Admin(cpf=data['cpf'], nome=data['nome'], email=data['email'], senha=hashed_password)
-        db.session.add(new_admin)
+
+        # Vincula a instituição, se fornecida
         token = data.get('token')
         inst_id = data.get('inst_id')
         if token:
@@ -288,26 +305,29 @@ def init_routes(app):
             if inst:
                 new_admin.instituicoes.append(inst)
                 new_admin.active_inst_id = inst.id
-        db.session.commit()
-        return jsonify({'message': 'Administrador criado com sucesso!','admin': new_admin.to_dict()}), 201
 
+        db.session.add(new_admin)
+        db.session.commit()
+        return jsonify({'message': 'Administrador criado com sucesso!', 'admin': new_admin.to_dict()}), 201
     @app.route('/api/login', methods=['POST'])
     def login():
         data = request.get_json()
         email = data.get('email')
         senha = data.get('senha')
 
+        # Busca usuário ou admin pelo email
         user = User.query.filter_by(email=email).first()
         admin = Admin.query.filter_by(email=email).first()
 
-        if user and bcrypt.check_password_hash(user.senha, senha):
+        # Verifica senha usando Werkzeug
+        if user and check_password_hash(user.senha, senha):
             return jsonify({
                 'user_type': 'user',
                 'user_data': user.to_dict(),
                 'instituicoes': [i.to_dict() for i in user.instituicoes]
             })
 
-        if admin and bcrypt.check_password_hash(admin.senha, senha):
+        if admin and check_password_hash(admin.senha, senha):
             return jsonify({
                 'user_type': 'admin',
                 'user_data': admin.to_dict(),
@@ -315,6 +335,7 @@ def init_routes(app):
             })
 
         return jsonify({'message': 'Credenciais inválidas'}), 401
+
 
 
     # --- API: RESERVAS ---
