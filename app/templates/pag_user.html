@@ -59,6 +59,25 @@
     </div>
   </div>
 </section>
+<section class="flex justify-center items-center bg-gray-50">
+  <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-md">
+    <h3 class="text-center text-xl font-semibold text-blue-600 mb-6">Entrar por token</h3>
+    <div class="flex gap-2">
+      <input
+        id="joinToken"
+        type="text"
+        placeholder="Cole o token da instituição"
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
+      <button
+        id="joinBtn"
+        class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+      >
+        Entrar
+      </button>
+    </div>
+  </div>
+</section>
 
 
   <main class="max-w-6xl mx-auto px-4 py-8">
@@ -188,14 +207,12 @@
         const j = await res.json();
         if (!res.ok) throw new Error(j.erro || 'Erro desconhecido');
         
-        alert(j.mensagem);
         // Atualiza a sessão local e recarrega a página
         const updatedUserData = { ...user_data, active_inst_id: inst_id };
         authManager.login({ ...session, user_data: updatedUserData });
 
       } catch (err) {
         console.error('Falha ao trocar instituição:', err);
-        alert(`Erro: ${err.message}`);
       }
     };
   }
@@ -316,7 +333,7 @@
       alert(`Reserva criada com sucesso!`);
       modal.classList.replace('flex', 'hidden');
     } catch (err) {
-      alert(`Erro: ${err.message}`);
+      //alert(`Erro: ${err.message}`);
     }
   }
   
@@ -354,7 +371,7 @@
             if (!res.ok) throw new Error(data.message || 'Erro ao logar.');
             authManager.login(data);
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            //alert(`Erro: ${err.message}`);
         }
     };
     // Handler para formulário de registro
@@ -373,7 +390,7 @@
             alert('Cadastro realizado! Faça o login.');
             registerModal.classList.replace('flex', 'hidden');
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            //alert(`Erro: ${err.message}`);
         }
     };
   });

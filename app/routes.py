@@ -144,6 +144,8 @@ def init_routes(app):
         user.active_inst_id = inst.id
         db.session.commit()
 
+        return jsonify({'message': 'Instituição alterada com sucesso', 'user_id': user_id, 'nova_instituicao': inst_id}), 200
+    
     @app.route('/api/instituicoes/vincular', methods=['POST'])
     def vincular_instituicao():
         ''' Vincula um admin a uma instituição existente '''
