@@ -126,6 +126,19 @@ def init_routes(app):
 
         return jsonify({'erro': 'Dados inválidos.'}), 400
 
+    @app.route('/api/user/<int:user_id>/switch_inst', methods=['POST'])
+    def switch_user_inst(user_id):
+        data = request.get_json()
+        inst_id = data.get('inst_id')
+
+        user = User.query.get_or_404(user_id)
+        inst = Instituicao.query.get(inst_id)
+        if not inst or inst not in user.instituicoes:
+            return jsonify({'erro': 'Instituição não encontrada ou não vinculada ao usuário.'}), 404
+        
+        user.active_inst_id = inst.id
+        db.session.commit()
+
     @app.route('/api/instituicoes/vincular', methods=['POST'])
     def vincular_instituicao():
         ''' Vincula um admin a uma instituição existente '''
@@ -148,13 +161,13 @@ def init_routes(app):
     # --- API: ESPAÇOS ---
     @app.route('/api/espacos', methods=['GET'])
     def get_espacos():
-        ''' Lista todos os espaços ou filtra por instituição '''
         inst_id = request.args.get('inst_id', type=int)
         query = Espaco.query
         if inst_id:
             query = query.filter_by(id_inst=inst_id)
         espacos = query.all()
         return jsonify([e.to_dict() for e in espacos]), 200
+
 
     @app.route('/api/espacos', methods=['POST'])
     def create_espaco():
@@ -280,27 +293,29 @@ def init_routes(app):
 
     @app.route('/api/login', methods=['POST'])
     def login():
-        ''' Autentica um usuário ou admin e retorna seus dados '''
         data = request.get_json()
-        if not data or not data.get('email') or not data.get('senha'):
-            abort(400, description="E-mail ou senha não fornecidos.")
-        user = User.query.filter_by(email=data['email']).first()
-        if user and check_password_hash(user.senha, data['senha']):
+        email = data.get('email')
+        senha = data.get('senha')
+
+        user = User.query.filter_by(email=email).first()
+        admin = Admin.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.senha, senha):
             return jsonify({
-                "status": "success",
-                "user_type": "user",
-                "user_data": user.to_dict(),
-                "instituicoes": [i.to_dict() for i in user.instituicoes]
-            }), 200
-        admin = Admin.query.filter_by(email=data['email']).first()
-        if admin and check_password_hash(admin.senha, data['senha']):
+                'user_type': 'user',
+                'user_data': user.to_dict(),
+                'instituicoes': [i.to_dict() for i in user.instituicoes]
+            })
+
+        if admin and bcrypt.check_password_hash(admin.senha, senha):
             return jsonify({
-                "status": "success",
-                "user_type": "admin",
-                "user_data": admin.to_dict(),
-                "instituicoes": [i.to_dict() for i in admin.instituicoes]
-            }), 200
-        return jsonify({"status": "error", "message": "Credenciais inválidas."}), 401
+                'user_type': 'admin',
+                'user_data': admin.to_dict(),
+                'instituicoes': [i.to_dict() for i in admin.instituicoes]
+            })
+
+        return jsonify({'message': 'Credenciais inválidas'}), 401
+
 
     # --- API: RESERVAS ---
     @app.route('/api/reservas', methods=['GET'])
