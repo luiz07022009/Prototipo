@@ -27,8 +27,6 @@
       <div><h1 class="text-xl font-semibold">Valida</h1></div>
     </div>
     <nav id="desktopMenu" class="hidden md:flex gap-4 items-center">
-      <a href="/planos" class="text-sm hover:underline">Planos</a>
-      <a href="/admin" class="text-sm hover:underline">Painel do Admin</a>
       <div id="userInfo" class="hidden items-center gap-2">
         <span id="userName" class="text-sm font-medium"></span>
         <button id="logoutBtn" class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md">Sair</button>
@@ -114,6 +112,7 @@
   </div>
 
  <script>
+
   // ------------------ GERENCIAMENTO DE AUTENTICAÇÃO E UI ------------------
   const authManager = {
     session: null,

@@ -16,46 +16,84 @@
 <header class="bg-white shadow">
   <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <img src="../static/iconValida.png" alt="Logo" class="w-10 h-10 rounded-md bg-accent object-cover" />
+      <img src="../static/iconValida.png" alt="Logo" class="w-10 h-10 rounded-md object-cover" />
       <div><h1 class="text-xl font-semibold">Valida</h1></div>
     </div>
     <nav class="hidden md:flex gap-4 items-center">
       <a href="/planos" class="text-sm font-semibold text-primary hover:underline">Planos</a>
-      <a href="/" class="text-sm hover:underline">Reservar Espaços</a>
       <a href="/admin" class="text-sm hover:underline">Painel do Admin</a>
     </nav>
   </div>
 </header>
 
 <section class="bg-gray-50 py-12">
-    <div class="max-w-6xl mx-auto px-4 text-center">
-        <h2 class="text-3xl font-bold mb-6">Nossos Planos</h2>
-        <p class="text-gray-600 mb-10">Escolha o plano que melhor atende suas necessidades. (Página demonstrativa)</p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition">
-              <h3 class="text-xl font-semibold mb-2">Básico</h3>
-              <p class="text-gray-500 mb-4">Ideal para reservas simples e pontuais.</p>
-              <div class="text-2xl font-bold mb-4">R$29/mês</div>
-              <ul class="text-gray-600 mb-6 space-y-2 text-left"><li>✔ Acesso a 1 sala por vez</li><li>✔ Suporte básico</li><li>✔ Reservas online</li></ul>
-              <button class="mt-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-teal-600 transition">Assinar</button>
-          </div>
-          <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition border-2 border-accent">
-              <h3 class="text-xl font-semibold mb-2">Profissional</h3>
-              <p class="text-gray-500 mb-4">Para equipes que precisam de mais flexibilidade.</p>
-              <div class="text-2xl font-bold mb-4">R$79/mês</div>
-              <ul class="text-gray-600 mb-6 space-y-2 text-left"><li>✔ Acesso a várias salas simultâneas</li><li>✔ Suporte prioritário</li><li>✔ Relatórios de utilização</li></ul>
-              <button class="mt-auto px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700 transition">Assinar</button>
-          </div>
-          <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition">
-              <h3 class="text-xl font-semibold mb-2">Empresarial</h3>
-              <p class="text-gray-500 mb-4">Controle total para grandes equipes e empresas.</p>
-              <div class="text-2xl font-bold mb-4">R$149/mês</div>
-              <ul class="text-gray-600 mb-6 space-y-2 text-left"><li>✔ Acesso ilimitado a salas</li><li>✔ Suporte dedicado</li><li>✔ Relatórios avançados e customizados</li></ul>
-              <button class="mt-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-teal-600 transition">Assinar</button>
-          </div>
-        </div>
+  <div class="max-w-6xl mx-auto px-4 text-center">
+    <h2 class="text-3xl font-bold mb-6">Nossos Planos Anuais</h2>
+    <p class="text-gray-600 mb-10">Economize com os planos anuais! Atenção: há limite na criação de salas por plano. (Página demonstrativa)</p>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+      <!-- Plano Free -->
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition border-2 border-gray-300">
+        <h3 class="text-xl font-semibold mb-2">Free</h3>
+        <p class="text-gray-500 mb-4">Perfeito para testar nosso sistema sem custo.</p>
+        <div class="text-2xl font-bold mb-4">Grátis</div>
+        <ul class="text-gray-600 mb-6 space-y-2 text-left">
+          <li>✔ Limite de criação: 2 salas</li>
+          <li>✔ Acesso básico</li>
+          <li>✔ Reservas ilimitadas</li>
+          <li>✔ Confirmação de presença via QR code no local</li>
+        </ul>
+        <button class="mt-auto px-4 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed" disabled>Selecionar</button>
+      </div>
+
+      <!-- Plano Básico -->
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition">
+        <h3 class="text-xl font-semibold mb-2">Básico</h3>
+        <p class="text-gray-500 mb-4">Ideal para reservas simples e pontuais.</p>
+        <div class="text-2xl font-bold mb-4">R$299/ano</div>
+        <ul class="text-gray-600 mb-6 space-y-2 text-left">
+          <li>✔ Limite de criação: 6 salas</li>
+          <li>✔ Suporte básico</li>
+          <li>✔ Reservas online</li>
+          <li>✔ Confirmação de presença via QR code no local</li>
+        </ul>
+        <button class="mt-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-teal-600 transition">Assinar</button>
+      </div>
+
+      <!-- Plano Profissional -->
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition border-2 border-accent">
+        <h3 class="text-xl font-semibold mb-2">Profissional</h3>
+        <p class="text-gray-500 mb-4">Para equipes que precisam de mais flexibilidade.</p>
+        <div class="text-2xl font-bold mb-4">R$799/ano</div>
+        <ul class="text-gray-600 mb-6 space-y-2 text-left">
+          <li>✔ Limite de criação: 15 salas</li>
+          <li>✔ Suporte prioritário</li>
+          <li>✔ Relatórios de utilização</li>
+          <li>✔ Confirmação de presença via QR code no local</li>
+          <li>✔ Chave digital para acesso rápido</li>
+        </ul>
+        <button class="mt-auto px-4 py-2 bg-accent text-white rounded-md hover:bg-blue-700 transition">Assinar</button>
+      </div>
+
+      <!-- Plano Empresarial -->
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-md transition">
+        <h3 class="text-xl font-semibold mb-2">Empresarial</h3>
+        <p class="text-gray-500 mb-4">Controle total para grandes equipes e empresas.</p>
+        <div class="text-2xl font-bold mb-4">R$1.499/ano</div>
+        <ul class="text-gray-600 mb-6 space-y-2 text-left">
+          <li>✔ Limite de criação: ilimitado</li>
+          <li>✔ Suporte dedicado</li>
+          <li>✔ Relatórios avançados e customizados</li>
+          <li>✔ Confirmação de presença via GPS</li>
+          <li>✔ QR code e chave digital inclusos</li>
+        </ul>
+        <button class="mt-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-teal-600 transition">Assinar</button>
+      </div>
+
     </div>
+  </div>
 </section>
+
 
 <footer class="bg-white border-t mt-8">
   <div class="max-w-6xl mx-auto px-4 py-6 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center">

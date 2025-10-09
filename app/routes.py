@@ -1,11 +1,10 @@
 from flask import render_template, request, jsonify, abort
-from flask_bcrypt import Bcrypt
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from app import db
 from app.models import User, Admin, Instituicao, Espaco, Reserva, gerar_slots
 
-bcrypt = Bcrypt()
 import uuid
 
 
@@ -311,6 +310,7 @@ def init_routes(app):
         db.session.add(new_admin)
         db.session.commit()
         return jsonify({'message': 'Administrador criado com sucesso!', 'admin': new_admin.to_dict()}), 201
+    
     @app.route('/api/login', methods=['POST'])
     def login():
         data = request.get_json()
