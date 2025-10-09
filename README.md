@@ -5,7 +5,7 @@ Este é o guia oficial para instalação e execução do projeto. Ele foi desenv
 ### Tecnologias Utilizadas
 
 * **Frontend:** HTML 5
-* **Backend:** Flask (um micro-framework em Python)
+* **Backend:** Flask
 * **Banco de Dados:** SQLite 3
 
 ### Pré-requisitos
