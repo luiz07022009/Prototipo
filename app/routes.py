@@ -144,6 +144,7 @@ def init_routes(app):
         return jsonify({'mensagem': f'{admin.nome} vinculado à instituição {inst.nome}.'}), 200
 
 
+
     # --- API: ESPAÇOS ---
     @app.route('/api/espacos', methods=['GET'])
     def get_espacos():

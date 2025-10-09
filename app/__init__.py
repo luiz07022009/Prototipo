@@ -1,4 +1,3 @@
-# /mnt/data/__init__.py  (ou app/__init__.py conforme seu projeto)
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
